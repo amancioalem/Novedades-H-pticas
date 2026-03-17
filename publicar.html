@@ -137,8 +137,21 @@
     </header>
 
     <main>
-        <!-- SECCIÓN DE PUBLICACIÓN -->
-        <section aria-labelledby="titulo-publicar">
+        <!-- SECCIÓN DE LOGIN -->
+        <section id="seccion-login" aria-labelledby="titulo-login">
+            <h2 id="titulo-login" style="color:var(--destacado);">Acceso Restringido</h2>
+            <form id="form-login">
+                <div>
+                    <label for="password">Contraseña de administrador:</label>
+                    <input type="password" id="password" required aria-required="true">
+                </div>
+                <button type="submit" class="btn-publicar">Ingresar</button>
+            </form>
+        </section>
+
+        <div id="panel-admin" style="display: none;">
+            <!-- SECCIÓN DE PUBLICACIÓN -->
+            <section aria-labelledby="titulo-publicar">
             <h2 id="titulo-publicar" style="color:var(--destacado);">Redactar Nueva Noticia</h2>
             <form id="form-novedad">
                 <div>
@@ -162,6 +175,7 @@
                 <p>Cargando lista...</p>
             </div>
         </section>
+        </div>
     </main>
 
     <!-- Firebase SDK -->
@@ -171,6 +185,24 @@
     <script>
         const formNovedad = document.getElementById('form-novedad');
         const contenedorNovedades = document.getElementById('contenedor-novedades');
+
+        // Lógica de Login
+        const formLogin = document.getElementById('form-login');
+        const seccionLogin = document.getElementById('seccion-login');
+        const panelAdmin = document.getElementById('panel-admin');
+        const CONTRASENA_ADMIN = "accesibilidad26"; // Contraseña predeterminada
+
+        formLogin.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            if (pass === CONTRASENA_ADMIN) {
+                seccionLogin.style.display = 'none';
+                panelAdmin.style.display = 'block';
+            } else {
+                alert('Contraseña incorrecta. Intente nuevamente.');
+                document.getElementById('password').focus();
+            }
+        });
 
         // ==== CONFIGURACIÓN DE BASE DE DATOS ====
         // Asegúrate de usar LOS MISMOS datos aquí que en el archivo index.html
@@ -201,9 +233,9 @@
         }
 
         function formatearFecha(fechaIso) {
-            const opciones = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' };
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
             const fecha = new Date(fechaIso);
-            return fecha.toLocaleDateString('es-ES', opciones);
+            return fecha.toLocaleDateString('es-ES', opciones) + ' hs';
         }
 
         // DIBUJAR LISTA EN PANTALLA

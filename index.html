@@ -123,9 +123,9 @@
         const esConfiguracionValida = CONFIGURACION_FIREBASE.projectId !== "tu-proyecto";
 
         function formatearFecha(fechaIso) {
-            const opciones = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' };
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
             const fecha = new Date(fechaIso);
-            return fecha.toLocaleDateString('es-ES', opciones);
+            return fecha.toLocaleDateString('es-ES', opciones) + ' hs';
         }
 
         function mostrarNovedadesEnPantalla(novedades) {
@@ -145,7 +145,7 @@
                 const fechaCorta = novedad.fechaIso.split('T')[0];
 
                 article.innerHTML = `
-                    <time class="fecha" datetime="${fechaCorta}">${fechaMostrar}</time>
+                    <time class="fecha" datetime="${novedad.fechaIso}">${fechaMostrar}</time>
                     <h2>${novedad.titulo}</h2>
                     <p>${novedad.descripcion}</p>
                 `;
