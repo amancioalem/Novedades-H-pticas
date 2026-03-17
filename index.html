@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablón de Novedades - Facultad</title>
+    <style>
+        /* Variables de colores para alto contraste */
+        :root {
+            --fondo: #121212;
+            --texto: #ffffff;
+            --destacado: #ffff00;
+            --borde: #444444;
+            --foco: #ffff00;
+        }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        :focus {
+            outline: 3px solid var(--foco);
+            outline-offset: 3px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--borde);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            color: var(--destacado);
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        article {
+            border: 1px solid var(--borde);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #1a1a1a;
+        }
+
+        .fecha {
+            display: block;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--texto);
+        }
+
+        h2 {
+            color: var(--destacado);
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin: 0;
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Novedades de Accesibilidad</h1>
+    </header>
+
+    <!-- Contenedor donde se insertarán las novedades -->
+    <main id="contenedor-novedades" aria-live="polite">
+        <p>Cargando novedades...</p>
+    </main>
+
+    <!-- Firebase SDK (Versión 8 - compatible con JS estático simple) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const contenedorNovedades = document.getElementById('contenedor-novedades');
+
+        // ==== CONFIGURACIÓN DE BASE DE DATOS (FIREBASE) ====
+        // Si vas a subir esto a GitHub Pages, debes crearte una cuenta gratuita en Firebase,
+        // y pegar acá los datos correspondientes. 
+        const CONFIGURACION_FIREBASE = {
+            apiKey: "AIzaSyDRMNw8w48hsFLxv_w0_F0hnLP__iLWDQE",
+
+            authDomain: "proyecto-novedades-hapticas.firebaseapp.com",
+
+            databaseURL: "https://proyecto-novedades-hapticas-default-rtdb.firebaseio.com",
+
+            projectId: "proyecto-novedades-hapticas",
+
+            storageBucket: "proyecto-novedades-hapticas.firebasestorage.app",
+
+            messagingSenderId: "743296315462",
+
+            appId: "1:743296315462:web:28a23742fbb32f0bee9a47"
+
+
+        };
+
+        const esConfiguracionValida = CONFIGURACION_FIREBASE.projectId !== "tu-proyecto";
+
+        function formatearFecha(fechaIso) {
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' };
+            const fecha = new Date(fechaIso);
+            return fecha.toLocaleDateString('es-ES', opciones);
+        }
+
+        function mostrarNovedadesEnPantalla(novedades) {
+            contenedorNovedades.innerHTML = '';
+
+            if (novedades.length === 0) {
+                contenedorNovedades.innerHTML = '<p>No hay novedades publicadas en este momento.</p>';
+                return;
+            }
+
+            // Ordenar de más reciente a más antigua
+            novedades.sort((a, b) => new Date(b.fechaIso) - new Date(a.fechaIso));
+
+            novedades.forEach(novedad => {
+                const article = document.createElement('article');
+                const fechaMostrar = formatearFecha(novedad.fechaIso);
+                const fechaCorta = novedad.fechaIso.split('T')[0];
+
+                article.innerHTML = `
+                    <time class="fecha" datetime="${fechaCorta}">${fechaMostrar}</time>
+                    <h2>${novedad.titulo}</h2>
+                    <p>${novedad.descripcion}</p>
+                `;
+
+                contenedorNovedades.appendChild(article);
+            });
+        }
+
+        // ==========================================
+        // LÓGICA DE OBTENCIÓN DE DATOS
+        // ==========================================
+
+        if (esConfiguracionValida) {
+            // MODO PRODUCCIÓN: Conectado a Firebase Database
+            firebase.initializeApp(CONFIGURACION_FIREBASE);
+            const dbRef = firebase.database().ref('novedades');
+
+            // '.on' escucha en tiempo real. Si publican, se actualiza automáticamente.
+            dbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                let lista = [];
+                if (data) {
+                    for (let key in data) {
+                        lista.push({ idFirebase: key, ...data[key] });
+                    }
+                }
+                mostrarNovedadesEnPantalla(lista);
+            });
+        } else {
+            // MODO PRUEBA: Funciona localmente en tu PC para que puedas probar las páginas
+            function cargarLocal() {
+                const navStr = localStorage.getItem('novedadesFacultad');
+                const lista = navStr ? JSON.parse(navStr) : [];
+                mostrarNovedadesEnPantalla(lista);
+            }
+            cargarLocal();
+            // Permite actualizar si agregar cosas en la otra pestaña
+            window.addEventListener('storage', cargarLocal);
+        }
+    </script>
+</body>
+
+</html>

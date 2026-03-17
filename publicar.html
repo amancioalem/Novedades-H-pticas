@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta robots previene que los motores de búsqueda indexen tu plataforma de administración -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>Publicar - Sistema de Accesibilidad</title>
+    <style>
+        /* Variables de colores idénticas para mantener la consistencia visual */
+        :root {
+            --fondo: #121212;
+            --texto: #ffffff;
+            --destacado: #ffff00;
+            --borde: #444444;
+            --foco: #ffff00;
+        }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        :focus {
+            outline: 3px solid var(--foco);
+            outline-offset: 3px;
+        }
+
+        header {
+            border-bottom: 2px solid var(--borde);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            color: var(--destacado);
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        /* --- Estilos para la sección de administración --- */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            border: 2px solid var(--borde);
+            background-color: #1a1a1a;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        input,
+        textarea,
+        button {
+            background-color: var(--fondo);
+            color: var(--texto);
+            border: 2px solid var(--borde);
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            font-size: 1.125rem;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        textarea:focus,
+        button:focus {
+            outline: 3px solid var(--foco);
+            outline-offset: 2px;
+            border-color: var(--foco);
+        }
+
+        button.btn-publicar {
+            background-color: var(--texto);
+            color: var(--fondo);
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        button.btn-publicar:hover,
+        button.btn-publicar:focus {
+            background-color: var(--destacado);
+        }
+
+        /* Listado de novedades para borrar */
+        #contenedor-novedades {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        article {
+            border: 1px solid var(--borde);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #1a1a1a;
+        }
+
+        button.btn-eliminar {
+            margin-top: 1rem;
+            background-color: transparent;
+            color: #ffaaaa;
+            border: 2px solid #ffaaaa;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button.btn-eliminar:hover,
+        button.btn-eliminar:focus {
+            background-color: #ffaaaa;
+            color: var(--fondo);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Panel de Publicación</h1>
+        <p>Esta página te permite añadir y borrar novedades. Las visualizaciones están en <code>index.html</code>.</p>
+    </header>
+
+    <main>
+        <!-- SECCIÓN DE PUBLICACIÓN -->
+        <section aria-labelledby="titulo-publicar">
+            <h2 id="titulo-publicar" style="color:var(--destacado);">Redactar Nueva Noticia</h2>
+            <form id="form-novedad">
+                <div>
+                    <label for="titulo">Título de la novedad (breve):</label>
+                    <input type="text" id="titulo" name="titulo" required aria-required="true">
+                </div>
+
+                <div>
+                    <label for="descripcion">Descripción detallada del problema o anuncio:</label>
+                    <textarea id="descripcion" name="descripcion" rows="4" required aria-required="true"></textarea>
+                </div>
+
+                <button type="submit" class="btn-publicar">Publicar Novedad</button>
+            </form>
+        </section>
+
+        <!-- SECCIÓN DE ADMINISTRACIÓN (Leer y Borrar) -->
+        <section aria-labelledby="titulo-lista">
+            <h2 id="titulo-lista" style="color:var(--destacado);">Novedades Actuales</h2>
+            <div id="contenedor-novedades" aria-live="polite">
+                <p>Cargando lista...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const formNovedad = document.getElementById('form-novedad');
+        const contenedorNovedades = document.getElementById('contenedor-novedades');
+
+        // ==== CONFIGURACIÓN DE BASE DE DATOS ====
+        // Asegúrate de usar LOS MISMOS datos aquí que en el archivo index.html
+        const CONFIGURACION_FIREBASE = {
+            apiKey: "AIzaSyDRMNw8w48hsFLxv_w0_F0hnLP__iLWDQE",
+
+            authDomain: "proyecto-novedades-hapticas.firebaseapp.com",
+
+            databaseURL: "https://proyecto-novedades-hapticas-default-rtdb.firebaseio.com",
+
+            projectId: "proyecto-novedades-hapticas",
+
+            storageBucket: "proyecto-novedades-hapticas.firebasestorage.app",
+
+            messagingSenderId: "743296315462",
+
+            appId: "1:743296315462:web:28a23742fbb32f0bee9a47"
+
+
+        };
+
+        const esConfiguracionValida = CONFIGURACION_FIREBASE.projectId !== "tu-proyecto";
+        let dbRef = null;
+
+        if (esConfiguracionValida) {
+            firebase.initializeApp(CONFIGURACION_FIREBASE);
+            dbRef = firebase.database().ref('novedades');
+        }
+
+        function formatearFecha(fechaIso) {
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' };
+            const fecha = new Date(fechaIso);
+            return fecha.toLocaleDateString('es-ES', opciones);
+        }
+
+        // DIBUJAR LISTA EN PANTALLA
+        function mostrarNovedadesAdministracion(novedades) {
+            contenedorNovedades.innerHTML = '';
+
+            if (novedades.length === 0) {
+                contenedorNovedades.innerHTML = '<p>No hay novedades publicadas en este momento.</p>';
+                return;
+            }
+
+            novedades.sort((a, b) => new Date(b.fechaIso) - new Date(a.fechaIso));
+
+            novedades.forEach(novedad => {
+                const article = document.createElement('article');
+                const fechaMostrar = formatearFecha(novedad.fechaIso);
+
+                // Generamos la tarjeta + el botón de eliminar
+                article.innerHTML = `
+                    <p><strong>${fechaMostrar}</strong> - ${novedad.titulo}</p>
+                    <button class="btn-eliminar" onclick="eliminarNovedad('${novedad.idFirebase}')" aria-label="Eliminar novedad: ${novedad.titulo}">Eliminar permanentemente</button>
+                `;
+                contenedorNovedades.appendChild(article);
+            });
+        }
+
+        // OBTENER Y ESCUCHAR DATOS
+        if (esConfiguracionValida) {
+            dbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                let lista = [];
+                if (data) Object.keys(data).forEach(k => lista.push({ idFirebase: k, ...data[k] }));
+                mostrarNovedadesAdministracion(lista);
+            });
+        } else {
+            console.warn("Modo PUEBA LOCAL activado.");
+            function cargarLocal() {
+                const str = localStorage.getItem('novedadesFacultad');
+                mostrarNovedadesAdministracion(str ? JSON.parse(str) : []);
+            }
+            cargarLocal();
+            window.addEventListener('storage', cargarLocal); // Detecta si hay borrados desde la otra pestaña (no habitual, pero suma firmeza)
+        }
+
+        // AÑADIR NUEVA NOVEDAD
+        formNovedad.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const titulo = document.getElementById('titulo').value;
+            const descripcion = document.getElementById('descripcion').value;
+
+            const nuevaNovedad = {
+                fechaIso: new Date().toISOString(),
+                titulo: titulo,
+                descripcion: descripcion
+            };
+
+            if (esConfiguracionValida) {
+                dbRef.push(nuevaNovedad).then(() => {
+                    formNovedad.reset();
+                    alert("✅ Novedad publicada con éxito!");
+                }).catch(err => {
+                    alert("❌ Error al publicar: " + err);
+                });
+            } else {
+                let current = JSON.parse(localStorage.getItem('novedadesFacultad') || '[]');
+                nuevaNovedad.idFirebase = Date.now().toString(); // ID Simulada
+                current.push(nuevaNovedad);
+                localStorage.setItem('novedadesFacultad', JSON.stringify(current));
+                formNovedad.reset();
+                cargarLocal(); // Forzar dibujo
+                alert("✅ Publicado (Solamente en modo de prueba local).");
+            }
+        });
+
+        // ELIMINAR NOVEDAD
+        window.eliminarNovedad = function (id) {
+            if (confirm("⚠️ ¿Estás seguro de que deseas eliminar esta novedad por completo? Esta acción no se puede deshacer.")) {
+                if (esConfiguracionValida) {
+                    dbRef.child(id).remove().catch(err => alert("No se pudo eliminar: " + err));
+                } else {
+                    let current = JSON.parse(localStorage.getItem('novedadesFacultad') || '[]');
+                    current = current.filter(x => x.idFirebase !== id);
+                    localStorage.setItem('novedadesFacultad', JSON.stringify(current));
+                    cargarLocal();
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
